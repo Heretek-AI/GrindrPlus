@@ -37,7 +37,7 @@ import java.io.Closeable
 import java.io.IOException
 
 class UnlimitedAlbums : Hook("Unlimited albums", "Allow to be able to view unlimited albums") {
-    private val albumsService = "tk.a" // search for 'v1/albums/red-dot'
+    private val albumsService = "com.grindrapp.android.api.albums.AlbumsRestService" // search for 'v1/albums/red-dot'
     private val albumModel = "com.grindrapp.android.chat.domain.model.Album"
     private val filteredSpankBankAlbumContent =
         "com.grindrapp.android.albums.spankbank.domain.model.FilteredSpankBankAlbumContent"

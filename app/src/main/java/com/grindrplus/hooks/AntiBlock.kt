@@ -23,22 +23,22 @@ class AntiBlock : Hook(
 ) {
     private val scope = CoroutineScope(Dispatchers.IO)
     private var myProfileId: Long = 0
-    private val chatDeleteConversationPlugin = "tn.c" // search for '"com.grindrapp.android.chat.ChatDeleteConversationPlugin",' and use the outer class
-    private val inboxFragmentV2DeleteConversations = "yx.c" // search for '("chat_read_receipt", conversationId, null);'
-    private val individualUnblockActivityViewModel = "vb0.w" // search for 'SnackbarEvent.i.ERROR, R.string.unblock_individual_sync_blocks_failure, null, new SnackbarEvent'
+    private val chatDeleteConversationPlugin = "ay1" // search for '"com.grindrapp.android.chat.ChatDeleteConversationPlugin",' and use the outer class
+    private val inboxFragmentV2DeleteConversations = "ps2" // search for '("chat_read_receipt", conversationId, null);'
+    private val individualUnblockActivityViewModel = "bb6" // search for 'SnackbarEvent.i.ERROR, R.string.unblock_individual_sync_blocks_failure, null, new SnackbarEvent'
 
     override fun init() {
         // do not invoke antiblock notification when the user is unblocking someone else
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
         findClass(individualUnblockActivityViewModel)
-            .hook("T", HookStage.BEFORE) { param ->
+            .hook("P", HookStage.BEFORE) { param ->
                 GrindrPlus.shouldTriggerAntiblock = false
             }
 
         // reenable antiblock notification after *above* is finished
         // search for '.setValue(new DialogMessage(116, null, 2, null));'
         findClass(individualUnblockActivityViewModel)
-            .hook("T", HookStage.AFTER) { param ->
+            .hook("P", HookStage.AFTER) { param ->
                 Thread.sleep(700) // Wait for WS to unblock
                 GrindrPlus.shouldTriggerAntiblock = true
             }

@@ -29,8 +29,8 @@ class ProfileDetails : Hook(
 	"Add extra fields and details to profiles"
 ) {
     private var boostedProfilesList = emptyList<String>()
-    private val blockedProfilesObserver = "ze0.n" // search for 'Intrinsics.checkNotNullParameter(dataList, "dataList");' - typically the last match
-    private val profileViewHolder = "vb0.m0\$c" // search for 'Intrinsics.checkNotNullParameter(individualUnblockActivityViewModel, "individualUnblockActivityViewModel");'
+    private val blockedProfilesObserver = "or1" // search for 'Intrinsics.checkNotNullParameter(dataList, "dataList");' - typically the last match
+    private val profileViewHolder = "eb6" // search for 'Intrinsics.checkNotNullParameter(individualUnblockActivityViewModel, "individualUnblockActivityViewModel");'
 
     private val distanceUtils = "com.grindrapp.android.utils.DistanceUtils"
     private val profileBarView = "com.grindrapp.android.ui.profileV2.ProfileBarView"
@@ -53,10 +53,15 @@ class ProfileDetails : Hook(
         }
 
         findClass(blockedProfilesObserver).hook("onChanged", HookStage.AFTER) { param ->
-            val obj = getObjectField(param.thisObject(), "a")
-            val profileList = getObjectField(obj, "o") as ArrayList<*>
+            val obj = try {
+                getObjectField(param.thisObject(), "b")
+            } catch (e: Exception) {
+                getObjectField(param.thisObject(), "a")
+            }
+            val profileList = (getObjectField(obj, "o") as? List<*>) ?: return@hook
 
             for (profile in profileList) {
+                if (profile == null) continue
                 val profileId = callMethod(profile, "getProfileId") as String
                 val displayName =
                     (callMethod(profile, "getDisplayName") as? String)

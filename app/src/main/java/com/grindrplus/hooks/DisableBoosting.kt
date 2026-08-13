@@ -11,8 +11,8 @@ class DisableBoosting : Hook(
     "Disable boosting",
     "Get rid of all upsells related to boosting"
 ) {
-    private val drawerProfileUiState = "sc0.j\$a" // search for 'DrawerProfileUiState(showBoostMeButton='
-    private val radarUiModel = "r50.a\$a" // search for 'RadarUiModel(boostButton='
+    private val drawerProfileUiState = "com.grindrapp.android.ui.drawer.model.DrawerProfileUiState" // search for 'DrawerProfileUiState(showBoostMeButton='
+    private val radarUiModel = "tq8" // search for 'RadarUiModel(boostButton='
     private val fabUiModel = "com.grindrapp.android.boost2.presentation.model.FabUiModel"
     private val rightNowMicrosFabUiModel =
         "com.grindrapp.android.rightnow.presentation.model.RightNowMicrosFabUiModel"
@@ -25,27 +25,27 @@ class DisableBoosting : Hook(
 
     override fun init() {
         findClass(drawerProfileUiState).hookConstructor(HookStage.AFTER) { param ->
-            setObjectField(param.thisObject(), "a", false) // showBoostMeButton
+            setObjectField(param.thisObject(), "showBoostMeButton", false)
             setObjectField(
                 param.thisObject(),
-                "e",
+                "boostButtonState",
                 newInstance(findClass(boostStateClass))
-            ) // boostButtonState
+            )
             setObjectField(
                 param.thisObject(),
-                "f",
+                "roamButtonState",
                 newInstance(findClass(boostStateClass))
-            ) // roamButtonState
-            setObjectField(param.thisObject(), "c", false) // showRNBoostCard
-            setObjectField(param.thisObject(), "i", null) // showDayPassItem
-            setObjectField(param.thisObject(), "j", null) // unlimitedWeeklySubscriptionItem
-            setObjectField(param.thisObject(), "t", false) // isRightNowAvailable
-			setObjectField(param.thisObject(), "v", false) // showMegaBoost
+            )
+            setObjectField(param.thisObject(), "showRNBoostCard", false)
+            setObjectField(param.thisObject(), "showDayPassItem", null)
+            setObjectField(param.thisObject(), "unlimitedWeeklySubscriptionItem", null)
+            setObjectField(param.thisObject(), "isRightNowAvailable", false)
+            setObjectField(param.thisObject(), "showBoostDrawerFtux", false)
         }
 
         findClass(radarUiModel).hookConstructor(HookStage.AFTER) { param ->
-            setObjectField(param.thisObject(), "a", null) // boostButton
-            setObjectField(param.thisObject(), "b", null) // roamButton
+            setObjectField(param.thisObject(), "a", null) // roamButton
+            setObjectField(param.thisObject(), "b", null) // activeMicroSessionUi
         }
 
         findClass(fabUiModel).hookConstructor(HookStage.AFTER) { param ->
@@ -67,19 +67,5 @@ class DisableBoosting : Hook(
 
 			param.setArg(2, newRouteList)
 		}
-
-        // the two anonymous functions that get called to invoke the annoying tooltip
-        // respectively: showRadarTooltip.<anonymous> and showTapsAndViewedMePopup
-        // search for:
-        //   ???     - 'com.grindrapp.android.ui.home.HomeActivity$showTapsAndViewedMePopup$1$1'
-        //   ???     - 'com.grindrapp.android.ui.home.HomeActivity.showTapsAndViewedMePopup.<anonymous> (HomeActivity.kt'
-        //   ???     - 'com.grindrapp.android.ui.home.HomeActivity.showTapsAndViewedMePopup.<anonymous>.<anonymous> (HomeActivity.kt'
-		//   "Il.w0" - 'com.grindrapp.android.ui.home.HomeActivity$subscribeForBoostRedeem$1'
-		// TODO find the showTapsAndViewedMePopup in 25.20.0
-        listOf("cd0.j2").forEach {
-            findClass(it).hook("invoke", HookStage.BEFORE) { param ->
-                param.setResult(null)
-            }
-        }
     }
 }

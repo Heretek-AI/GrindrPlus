@@ -17,11 +17,11 @@ class FeatureGranting : Hook(
     "Feature granting",
     "Grant all Grindr features"
 ) {
-    private val isFeatureFlagEnabled = "q30.f" // search for 'implements IsFeatureFlagEnabled {'
+    private val isFeatureFlagEnabled = "xh6" // search for 'implements IsFeatureFlagEnabled {'
     private val upsellsV8Model = "com.grindrapp.android.model.UpsellsV8"
     private val insertsModel = "com.grindrapp.android.model.Inserts"
     private val settingDistanceVisibilityViewModel =
-        "com.grindrapp.android.ui.settings.distance.a\$e" // search for 'UiState(distanceVisibility='
+        "sfa" // search for 'UiState(distanceVisibility='
     private val featureModel = "com.grindrapp.android.usersession.model.Feature"
     private val tapModel = "com.grindrapp.android.taps.model.Tap"
     private val tapInboxModel = "com.grindrapp.android.taps.data.model.TapsInboxEntity"

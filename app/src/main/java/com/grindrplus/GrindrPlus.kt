@@ -105,11 +105,11 @@ object GrindrPlus {
     val currentActivity: Activity?
         get() = currentActivityRef?.get()
 
-    internal val userAgent = "as.r" // search for 'grindr3/'
-    internal val userSession = "com.grindrapp.android.usersession.b" // search for 'com.grindrapp.android.storage.UserSessionImpl$1'
+    internal val userAgent = "yxb" // search for 'grindr3/'
+    internal val userSession = "gzb" // search for 'com.grindrapp.android.storage.UserSessionImpl$1'
     private val deviceInfo =
-        "ek.y" // search for 'AdvertisingIdClient.Info("00000000-0000-0000-0000-000000000000", true)'
-    internal val grindrLocationProvider = "nz.e" // search for 'system settings insufficient for location request, attempting to resolve'
+        "o93" // search for 'AdvertisingIdClient.Info("00000000-0000-0000-0000-000000000000", true)'
+    internal val grindrLocationProvider = "ek5" // search for 'system settings insufficient for location request, attempting to resolve'
     internal val serverDrivenCascadeRepo = "com.grindrapp.android.persistence.repository.ServerDrivenCascadeRepo"
     internal val ageVerificationActivity = "com.grindrapp.android.ageverification.presentation.ui.AgeVerificationActivity"
     internal val browseExploreActivity = "com.grindrapp.android.ui.browse.BrowseExploreMapActivity"
@@ -121,7 +121,7 @@ object GrindrPlus {
     private var currentActivityRef: WeakReference<Activity>? = null
 
     private val splineDataEndpoint =
-        "https://raw.githubusercontent.com/R0rt1z2/GrindrPlus/refs/heads/master/spline.json"
+        "https://raw.githubusercontent.com/Heretek-AI/GrindrPlus/refs/heads/master/spline.json"
 
     val serverNotifications = EventManager.serverNotifications
 

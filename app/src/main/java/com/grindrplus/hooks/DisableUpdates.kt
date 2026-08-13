@@ -18,10 +18,10 @@ class DisableUpdates : Hook(
     "Disable forced updates"
 ) {
     private val versionInfoEndpoint =
-        "https://raw.githubusercontent.com/R0rt1z2/GrindrPlus/master/version.json"
+        "https://raw.githubusercontent.com/Heretek-AI/GrindrPlus/master/version.json"
     private val appUpdateInfo = "com.google.android.play.core.appupdate.AppUpdateInfo"
     private val appUpdateZzm = "com.google.android.play.core.appupdate.zzm" // search for 'requestUpdateInfo(%s)'
-	private val appUpgradeManager = "rz.v" // search for 'Uri.parse("market://details?id=com.grindrapp.android");'
+	private val appUpgradeManager = "hr8" // search for 'Uri.parse("market://details?id=com.grindrapp.android");'
     private val appConfiguration = "com.grindrapp.android.platform.config.AppConfiguration"
     private var versionCode: Int = 0
     private var versionName: String = ""
@@ -99,7 +99,7 @@ class DisableUpdates : Hook(
 
         if (compareVersions(versionName, currentVersion) > 0) {
             findClass(appConfiguration).hookConstructor(HookStage.AFTER) { param ->
-                setObjectField(param.thisObject(), "d", "$versionName.$versionCode")
+                setObjectField(param.thisObject(), "e", "$versionName.$versionCode")
             }
 
             findClass(GrindrPlus.userAgent).hookConstructor(HookStage.AFTER) { param ->

@@ -22,7 +22,7 @@ class GPlusMessage(
     val timestamp: Long
 )
 
-const val CHANNEL_PING_URL = "https://github.com/R0rt1z2/GrindrPlus/raw/refs/heads/master/news.json"
+const val CHANNEL_PING_URL = "https://github.com/Heretek-AI/GrindrPlus/raw/refs/heads/master/news.json"
 val tgMessages = MutableStateFlow<List<GPlusMessage>>(listOf())
 
 suspend fun fetchNotifs(context: Context) = withContext(Dispatchers.IO) {

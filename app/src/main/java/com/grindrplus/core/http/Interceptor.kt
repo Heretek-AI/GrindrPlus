@@ -22,13 +22,13 @@ class Interceptor(
 
     private fun modifyRequest(originalRequest: Request): Request {
         // search for 'getJwt().length() > 0 &&' in userSession
-        val isLoggedIn = invokeMethodSafe(userSession, "q") as? Boolean ?: false
+        val isLoggedIn = invokeMethodSafe(userSession, "p") as? Boolean ?: false
 
         val builder: Builder = originalRequest.newBuilder()
 
         if (isLoggedIn) {
             // search for a one line method that returns a StateFlow<String> in userSession
-            val authTokenFlow = invokeMethodSafe(userSession, "w")
+            val authTokenFlow = invokeMethodSafe(userSession, "x")
             val authToken = if (authTokenFlow != null) {
                 invokeMethodSafe(authTokenFlow, "getValue") as? String ?: ""
             } else {
@@ -36,7 +36,7 @@ class Interceptor(
             }
 
             // search for path_segment_encode_set_uri in userSession
-            val roles = invokeMethodSafe(userSession, "D") as? String ?: ""
+            val roles = invokeMethodSafe(userSession, "E") as? String ?: ""
 
             if (authToken.isNotEmpty()) {
                 builder.header("Authorization", "Grindr3 $authToken")
