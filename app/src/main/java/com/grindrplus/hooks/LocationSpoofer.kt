@@ -41,6 +41,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.reflect.Proxy
+/**
+ * Location spoofer.
+ *
+ * Spoof your location.
+ *
+ * Hooks `com.grindrapp.android` to add/modify this feature. See
+ * `docs/patches/location_spoofer.md` for design notes and version-port history.
+ *
+ * **Obfuscation marker convention.** Every capture of an obfuscated
+ * symbol (single- or two-letter class/method name) in this file carries
+ * an inline comment whose body is a stable, unique snippet from the
+ * JADX-decompiled source. When porting this hook to a new Grindr
+ * version, paste each snippet into JADX's search box to find the new
+ * obfuscated name. See `AGENTS.md` § 3 for the full convention.
+ *
+ * **Lifecycle.** `init()` is invoked once by HookManager.registerHooks()
+ * after `Config` confirms the hook is enabled. `cleanup()` is invoked on
+ * HookManager.reloadHooks() and must release any reflection-cached
+ * resources, coroutines, or threads.
+ */
 
 class LocationSpoofer : Hook(
     "Location spoofer",
@@ -573,7 +593,6 @@ class LocationSpoofer : Hook(
         // set initial marker position
         callMethod(markerOptions, "position", selectedLatLng)
 
-
         // implement OnMapClickListener via proxy
         val onMapClickListener = Proxy.newProxyInstance(
             context.classLoader,
@@ -619,7 +638,6 @@ class LocationSpoofer : Hook(
         }
 
         callMethod(mapView, "getMapAsync", onMapReadyListener)
-
 
         AlertDialog.Builder(context).apply {
             setTitle("Pick Location")

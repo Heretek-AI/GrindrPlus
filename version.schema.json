@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Heretek-AI/GrindrPlus/version.schema.json",
+  "title": "GrindrPlus target Grindr version metadata",
+  "description": "The single source of truth for which Grindr (com.grindrapp.android) version this module targets. Updated by fetch_version.py; read by app/build.gradle.kts to set grindrVersionName/grindrVersionCode.",
+  "type": "object",
+  "required": ["versionName", "versionCode"],
+  "additionalProperties": false,
+  "properties": {
+    "versionName": {
+      "type": "string",
+      "description": "Grindr's semantic version (X.Y.Z). Mirrors the value APKMirror exposes for the latest com.grindrapp.android release.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["26.13.0", "25.21.1"]
+    },
+    "versionCode": {
+      "type": "integer",
+      "description": "Grindr's build number (positive integer). Mirrors the value APKMirror exposes for the latest com.grindrapp.android release.",
+      "minimum": 1,
+      "examples": [170510, 148541]
+    }
+  }
+}

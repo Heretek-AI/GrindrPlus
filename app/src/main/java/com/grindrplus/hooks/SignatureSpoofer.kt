@@ -15,6 +15,30 @@ private const val configRealtimeHttpClient =
 private const val configFetchHttpClient =
     "com.google.firebase.remoteconfig.internal.ConfigFetchHttpClient"
 
+/**
+ * App-signature spoofing.
+ *
+ * Unlike the rest of the hooks in this package (which extend
+ * [com.grindrplus.utils.Hook] and register via [com.grindrplus.utils.HookManager]),
+ * this file is a top-level [spoofSignatures] function called directly from
+ * [com.grindrplus.XposedLoader.handleLoadPackage]. It runs once per package
+ * load and:
+ *
+ * - Rewrites `getFingerprintHashForPackage` on Firebase + Facebook SDKs so
+ *   they report the *original* Grindr APK signature, not the LSPatch-
+ *   repackaged one (Firebase/Facebook reject mismatched signatures).
+ * - Forces Facebook login to fall through to the web flow by zeroing the
+ *   `tryAuthorize` return, sidestepping an external-app signature check.
+ * - On non-Grindr packages, fixes `ContextWrapper.getPackageName` /
+ *   Firebase `Metadata.getPackageInfo` so they still report the
+ *   `com.grindrapp.android` package name for any caller in the Firebase
+ *   install stack.
+ *
+ * The hooks here target stable, fully-qualified classes from Firebase /
+ * Facebook; the obfuscation-marker convention doesn't apply.
+ *
+ * @see com.grindrplus.XposedLoader for the call site.
+ */
 @OptIn(ExperimentalStdlibApi::class)
 fun spoofSignatures(param: XC_LoadPackage.LoadPackageParam) {
 

@@ -16,6 +16,21 @@ import javax.net.ssl.SSLSession
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
+/**
+ * SSL certificate pinning bypass.
+ *
+ * Unlike the rest of the hooks in this package (which extend
+ * [com.grindrplus.utils.Hook] and register via [com.grindrplus.utils.HookManager]),
+ * this file is a top-level [sslUnpinning] function called directly from
+ * [com.grindrplus.XposedLoader.handleLoadPackage] under `BuildConfig.DEBUG`.
+ * It runs before any Grindr network call so the host app's HTTPS stack
+ * never rejects our Mitmproxy / HTTP Toolkit cert.
+ *
+ * The hooks here target stable, fully-qualified classes from OkHttp /
+ * Conscrypt / Firebase; the obfuscation-marker convention doesn't apply.
+ *
+ * @see com.grindrplus.XposedLoader for the call site.
+ */
 @OptIn(ExperimentalStdlibApi::class)
 @SuppressLint("CustomX509TrustManager", "TrustAllX509TrustManager", "BadHostnameVerifier")
 fun sslUnpinning(param: XC_LoadPackage.LoadPackageParam) {

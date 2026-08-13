@@ -27,6 +27,13 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      - name: Verify patch-doc coverage
+        # AGENTS.md § 3.4 requires every hook in app/src/main/java/com/grindrplus/hooks/
+        # to have a corresponding docs/patches/<kebab>.md. Fails the build if any
+        # hook is undocumented. See scripts/check-patch-docs.sh and the
+        # patch-doc-coverage skill in .claude/skills/.
+        run: bash scripts/check-patch-docs.sh
+
       - name: Get Version Info
         id: version_info
         run: |

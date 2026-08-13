@@ -1,4 +1,5 @@
 {
+  "$schema": "./version.schema.json",
   "versionName": "26.13.0",
   "versionCode": 170510
 }

@@ -33,9 +33,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 
+/**
+ * Owns the lifecycle of every [Hook] registered with the module.
+ *
+ * The `hookList` literal in [registerHooks] is the single source of truth
+ * for which hooks ship in the module. **Every new hook** in
+ * `com.grindrplus.hooks` must be added here (and, per `AGENTS.md` § 4, get
+ * a matching `docs/patches/<kebab>.md`).
+ *
+ * The class is a singleton owned by [com.grindrplus.GrindrPlus.hookManager].
+ */
 class HookManager {
+    /** Currently-registered hooks, keyed by their concrete [KClass]. */
     private var hooks = mutableMapOf<KClass<out Hook>, Hook>()
 
+    /**
+     * Build the [hookList], register each hook's settings with [Config],
+     * and (when [init] is true) call [Hook.init] on every enabled hook.
+     *
+     * Pass `init = false` to only refresh the settings registry without
+     * invoking hook bodies — useful for first-launch wiring where the host
+     * app context is not yet available.
+     *
+     * @param init If true, call [Hook.init] on every hook whose setting is
+     *             enabled in [Config]. Default `true`.
+     */
     fun registerHooks(init: Boolean = true) {
         runBlocking(Dispatchers.IO) {
             val hookList = listOf(
@@ -89,6 +111,13 @@ class HookManager {
         }
     }
 
+    /**
+     * Tear down every currently-registered hook (calling [Hook.cleanup])
+     * and re-register the full [hookList] from scratch. Invoked from the
+     * in-app settings screen when the user toggles hooks off/on, or from
+     * any code path that needs to re-bind Xposed hooks (e.g. after a
+     * module update).
+     */
     fun reloadHooks() {
         runBlocking(Dispatchers.IO) {
             hooks.values.forEach { hook -> hook.cleanup() }
@@ -98,6 +127,10 @@ class HookManager {
         }
     }
 
+    /**
+     * One-shot initialization called by [com.grindrplus.GrindrPlus.init] on
+     * module load. Equivalent to `registerHooks(init = true)`.
+     */
     fun init() {
         registerHooks()
     }

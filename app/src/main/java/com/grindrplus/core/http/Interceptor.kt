@@ -14,6 +14,25 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeoutException
 
+/**
+ * OkHttp interceptor that injects the auth + telemetry headers Grindr's
+ * backend expects on every request.
+ *
+ * The interceptor reflects into three live objects from the host app —
+ * the [userSession] (provides the JWT + roles), the [userAgent] (provides
+ * the User-Agent string), and the [deviceInfo] (provides the device-fp
+ * header). Method and field letters change every Grindr release, so the
+ * call sites use `// search for '<snippet>'` markers as breadcrumbs.
+ *
+ * Failures here are *swallowed* with a synthetic [Response] so the hook
+ * never crashes the host app on a partial API mismatch — the cost is a
+ * failed HTTP request, which is much easier to diagnose than a crash.
+ *
+ * @param userSession Live user-session object from the host app (e.g.
+ *                    `com.grindrapp.android.usersession.<obf>`).
+ * @param userAgent   Live user-agent object from the host app.
+ * @param deviceInfo  Live device-info object from the host app.
+ */
 class Interceptor(
     private val userSession: Any,
     private val userAgent: Any,
@@ -73,6 +92,11 @@ class Interceptor(
         return builder.build()
     }
 
+    /**
+     * Reflectively invoke a no-arg method on [obj]. Returns `null` and
+     * logs a warning if the method is missing (typical after a Grindr
+     * update that renamed the symbol). Never throws.
+     */
     private fun invokeMethodSafe(obj: Any?, methodName: String): Any? {
         return try {
             if (obj == null) {
@@ -93,6 +117,10 @@ class Interceptor(
         }
     }
 
+    /**
+     * Reflectively read a field on [obj] (including private). Returns
+     * `null` and logs a warning if the field is missing. Never throws.
+     */
     private fun getFieldSafe(obj: Any?, fieldName: String): Any? {
         return try {
             if (obj == null) {

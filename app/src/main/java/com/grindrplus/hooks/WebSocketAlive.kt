@@ -11,6 +11,26 @@ import com.grindrplus.utils.HookAdapter
 import com.grindrplus.utils.HookStage
 import com.grindrplus.utils.hook
 import de.robv.android.xposed.XposedHelpers.callMethod
+/**
+ * Keep Alive WebSocket.
+ *
+ * Prevents WebSocket disconnections when app goes to background. Causes battery drain, use with caution.
+ *
+ * Hooks `com.grindrapp.android` to add/modify this feature. See
+ * `docs/patches/web_socket_alive.md` for design notes and version-port history.
+ *
+ * **Obfuscation marker convention.** Every capture of an obfuscated
+ * symbol (single- or two-letter class/method name) in this file carries
+ * an inline comment whose body is a stable, unique snippet from the
+ * JADX-decompiled source. When porting this hook to a new Grindr
+ * version, paste each snippet into JADX's search box to find the new
+ * obfuscated name. See `AGENTS.md` § 3 for the full convention.
+ *
+ * **Lifecycle.** `init()` is invoked once by HookManager.registerHooks()
+ * after `Config` confirms the hook is enabled. `cleanup()` is invoked on
+ * HookManager.reloadHooks() and must release any reflection-cached
+ * resources, coroutines, or threads.
+ */
 
 class WebSocketAlive : Hook(
     "Keep Alive WebSocket",
