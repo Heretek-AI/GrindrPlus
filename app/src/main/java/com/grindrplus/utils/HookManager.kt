@@ -10,6 +10,7 @@ import com.grindrplus.hooks.ChatIndicators
 import com.grindrplus.hooks.ChatTerminal
 import com.grindrplus.hooks.DisableAnalytics
 import com.grindrplus.hooks.DisableBoosting
+import com.grindrplus.hooks.DisablePairIP
 import com.grindrplus.hooks.DisableShuffle
 import com.grindrplus.hooks.DisableUpdates
 import com.grindrplus.hooks.EmptyCalls
@@ -69,6 +70,7 @@ class HookManager {
                 ChatTerminal(),
                 DisableAnalytics(),
                 DisableBoosting(),
+                DisablePairIP(),
                 DisableShuffle(),
                 DisableUpdates(),
                 EmptyCalls(),
