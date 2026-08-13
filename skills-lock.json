@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "android-development": {
+      "source": "dpconde/claude-android-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "2537ca062ab80d0235db27b4dadee5e07a84c5356aedf7f9d426e7f23019197d"
+    },
+    "apktool": {
+      "source": "brownfinesecurity/iothackbot",
+      "sourceType": "github",
+      "skillPath": "skills/apktool/SKILL.md",
+      "computedHash": "c18276733c771a0ec03e1433e9965e01c72079cc06b8745c177d1ea70797c682"
+    },
+    "jadx": {
+      "source": "brownfinesecurity/iothackbot",
+      "sourceType": "github",
+      "skillPath": "skills/jadx/SKILL.md",
+      "computedHash": "9735a340862eedfa533905f579dcc98dc464054f6df7d365762a33aa241cbc24"
+    }
+  }
+}
