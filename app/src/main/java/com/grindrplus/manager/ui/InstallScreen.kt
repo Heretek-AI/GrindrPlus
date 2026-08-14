@@ -122,25 +122,29 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
         }
     }
 
-    fun startCustomInstallation() {
-        if (customBundleUri == null || customModUri == null) {
+    fun startCustomInstallation(
+        version: String = customVersionName,
+        bundleUri: Uri? = customBundleUri,
+        modUri: Uri? = customModUri
+    ) {
+        if (bundleUri == null || modUri == null) {
             showToast(context, "Please select both bundle and mod files")
             return
         }
 
         isInstalling = true
-        addLog("Starting custom installation with version name: $customVersionName...", LogType.INFO)
+        addLog("Starting custom installation with version name: $version...", LogType.INFO)
 
         activityScope.launch {
             try {
-                val bundleFile = createTempFileFromUri(context, customBundleUri!!, "grindr-$customVersionName.zip")
-                val modFile = createTempFileFromUri(context, customModUri!!, "mod-$customVersionName.zip")
+                val bundleFile = createTempFileFromUri(context, bundleUri, "grindr-$version.zip")
+                val modFile = createTempFileFromUri(context, modUri, "mod-$version.zip")
 
                 val mapsApiKey = (Config.get("maps_api_key", "") as String).ifBlank { null }
 
                 val customInstallation = Installation(
                     context,
-                    customVersionName,
+                    version,
                     modFile.absolutePath,
                     bundleFile.absolutePath,
                     mapsApiKey
@@ -213,6 +217,7 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
                 showCustomFileDialog = false
                 addLog("Custom files selected. Version: $versionName", LogType.INFO)
                 addLog("Bundle: ${bundleUri.lastPathSegment}, Mod: ${modUri.lastPathSegment}", LogType.INFO)
+                startCustomInstallation(versionName, bundleUri, modUri)
             }
         )
     }

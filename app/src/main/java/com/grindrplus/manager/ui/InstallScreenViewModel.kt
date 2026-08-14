@@ -47,7 +47,9 @@ class InstallScreenViewModel : ViewModel() {
             val currentVersion = "v4.8.0-26.13.0"
             if (result.isSuccess) {
                 versionData.clear()
-                val list = result.getOrThrow().toMutableList()
+                val list = result.getOrThrow().map {
+                    if (it.modVer == currentVersion) Data(currentVersion, "", "") else it
+                }.toMutableList()
                 if (list.none { it.modVer == currentVersion }) {
                     list.add(0, Data(currentVersion, "", ""))
                 }

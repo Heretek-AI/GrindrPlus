@@ -82,6 +82,13 @@ class PatchApkStep(
                 }
             }
 
+            val extractNativeLibsAttr = appElement.searchAttributeByName("extractNativeLibs")
+            if (extractNativeLibsAttr != null) {
+                print("Setting extractNativeLibs to true...")
+                extractNativeLibsAttr.setValueAsString(StyleDocument.parseStyledString("true"))
+                manifestModified = true
+            }
+
             if (manifestModified) {
                 print("Saving modified manifest to ${baseApk.name}...")
                 apkModule.writeApk(baseApk)
@@ -144,7 +151,7 @@ class PatchApkStep(
                 logger,
                 *apkFilePaths,
                 "-o", outputDir.absolutePath,
-                "-l", "2",
+                "-l", "0",
                 "-f",
                 "-v",
                 "-m", modFile.absolutePath,
@@ -186,31 +193,46 @@ class PatchApkStep(
                         break
                     }
                 }
-                zipFile.close()
 
                 if (foundPairIp) {
                     print("Replacing PairIP native library in ${apk.name} with stub...")
                     val tempApk = File(apk.parentFile, "${apk.name}.tmp")
-                    val zin = java.util.zip.ZipInputStream(apk.inputStream().buffered())
                     val zout = java.util.zip.ZipOutputStream(tempApk.outputStream().buffered())
 
-                    var entry = zin.nextEntry
-                    while (entry != null) {
+                    val entries = zipFile.entries()
+                    while (entries.hasMoreElements()) {
+                        val entry = entries.nextElement()
                         val assetPath = stubMap[entry.name]
                         if (assetPath != null) {
+                            val stubBytes = context.assets.open(assetPath).use { it.readBytes() }
                             val newEntry = java.util.zip.ZipEntry(entry.name)
+                            if (entry.method == java.util.zip.ZipEntry.STORED) {
+                                newEntry.method = java.util.zip.ZipEntry.STORED
+                                newEntry.size = stubBytes.size.toLong()
+                                newEntry.compressedSize = stubBytes.size.toLong()
+                                val crc = java.util.zip.CRC32()
+                                crc.update(stubBytes)
+                                newEntry.crc = crc.value
+                            }
                             zout.putNextEntry(newEntry)
-                            context.assets.open(assetPath).use { it.copyTo(zout) }
+                            zout.write(stubBytes)
                             zout.closeEntry()
                         } else {
-                            zout.putNextEntry(java.util.zip.ZipEntry(entry.name))
-                            zin.copyTo(zout)
+                            val dataBytes = zipFile.getInputStream(entry).use { it.readBytes() }
+                            val newEntry = java.util.zip.ZipEntry(entry.name)
+                            if (entry.method == java.util.zip.ZipEntry.STORED) {
+                                newEntry.method = java.util.zip.ZipEntry.STORED
+                                newEntry.size = entry.size
+                                newEntry.compressedSize = entry.compressedSize
+                                newEntry.crc = entry.crc
+                            }
+                            zout.putNextEntry(newEntry)
+                            zout.write(dataBytes)
                             zout.closeEntry()
                         }
-                        entry = zin.nextEntry
                     }
-                    zin.close()
                     zout.close()
+                    zipFile.close()
 
                     if (apk.delete()) {
                         tempApk.renameTo(apk)
@@ -218,6 +240,8 @@ class PatchApkStep(
                     } else {
                         tempApk.delete()
                     }
+                } else {
+                    zipFile.close()
                 }
             } catch (e: Exception) {
                 print("Warning: Failed to stub PairIP library in ${apk.name}: ${e.message}")
