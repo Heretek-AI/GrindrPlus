@@ -3,6 +3,7 @@ package com.grindrplus.manager.installation.steps
 import android.content.Context
 import com.grindrplus.manager.installation.BaseStep
 import com.grindrplus.manager.installation.Print
+import com.grindrplus.patches.DexPatcher
 import com.reandroid.apk.ApkModule
 import com.reandroid.xml.StyleDocument
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +20,11 @@ class PatchApkStep(
     private val modFile: File,
     private val keyStore: File,
     private val customMapsApiKey: String?,
-    private val embedLSPatch: Boolean = true
+    // Default false: LSPatch's DEX round-trip strips Kotlin metadata and crashes the app
+    // with a kotlinx.coroutines NPE on first launch (see Issue #1 + README's known bug list).
+    // LSPosed (rooted) is the supported path for runtime hooks; LSPatch-only installs must
+    // bypass the LSPatch step until the metadata issue is fixed in LSPatch itself.
+    private val embedLSPatch: Boolean = false
 ) : BaseStep() {
     override val name = "Patching Grindr APK"
 
@@ -37,11 +42,11 @@ class PatchApkStep(
             throw IOException("No valid APK files found to patch")
         }
 
-        try {
-            val baseApk = apkFiles.find {
-                it.name == "base.apk" || it.name.startsWith("base.apk-")
-            } ?: apkFiles.first()
+        val baseApk = apkFiles.find {
+            it.name == "base.apk" || it.name.startsWith("base.apk-")
+        } ?: apkFiles.first()
 
+        try {
             print("Inspecting ${baseApk.name} for manifest adjustments...")
             val apkModule = ApkModule.loadApkFile(baseApk)
             var manifestModified = false
@@ -53,6 +58,50 @@ class PatchApkStep(
                 print("PairIP wrapper detected. Replacing application class with RealApplication...")
                 appNameAttr.setValueAsString(StyleDocument.parseStyledString("com.grindrapp.android.RealApplication"))
                 manifestModified = true
+            }
+
+            // Disable PairIP's LicenseActivity — even if some code path tries to start it,
+            // android:enabled=false prevents the system from launching it.
+            apkModule.androidManifest.applicationElement.getElements { element ->
+                element.name == "activity"
+            }.forEach { activity ->
+                val nameAttr = activity.searchAttributeByName("name")
+                if (nameAttr != null && nameAttr.valueString?.contains("LicenseActivity") == true) {
+                    val existing = activity.searchAttributeByName("enabled")
+                    if (existing != null) {
+                        existing.setValueAsString("false")
+                    } else {
+                        val enabledAttr = activity.newAttribute()
+                        enabledAttr.setName("enabled", 0x0101000e) // android:enabled
+                        enabledAttr.setValueAsString("false")
+                        activity.addAttribute(enabledAttr)
+                    }
+                    print("Disabled LicenseActivity: ${nameAttr.valueString}")
+                    manifestModified = true
+                }
+            }
+
+            // Disable com.google.firebase.provider.FirebaseInitProvider — debug-signed APKs
+            // hit a kotlinx.coroutines NPE during FirebaseApp initialization because the original
+            // signing cert isn't present (zzc.<clinit> reads null zzjo.zza). Skipping Firebase
+            // auto-init avoids the chain entirely.
+            apkModule.androidManifest.applicationElement.getElements { element ->
+                element.name == "provider"
+            }.forEach { provider ->
+                val nameAttr = provider.searchAttributeByName("name")
+                if (nameAttr != null && nameAttr.valueString == "com.google.firebase.provider.FirebaseInitProvider") {
+                    val existing = provider.searchAttributeByName("enabled")
+                    if (existing != null) {
+                        existing.setValueAsString("false")
+                    } else {
+                        val enabledAttr = provider.newAttribute()
+                        enabledAttr.setName("enabled", 0x0101000e) // android:enabled
+                        enabledAttr.setValueAsString("false")
+                        provider.addAttribute(enabledAttr)
+                    }
+                    print("Disabled FirebaseInitProvider")
+                    manifestModified = true
+                }
             }
 
             if (customMapsApiKey != null) {
@@ -100,6 +149,19 @@ class PatchApkStep(
 
         // Neutralize PairIP native binary in any split APKs
         replacePairIpNativeLibs(context, apkFiles, print)
+
+        // Apply the PairIP + Firebase safe-guard no-op DEX pass to base.apk.
+        // Uses dexlib2's in-memory `DexRewriter` + `DexPool.writeTo` — only the methods
+        // we touch are rebuilt; every other class stays byte-identical, preserving
+        // R8-inlined string constants (the root cause of Issue #1's NPE).
+        try {
+            print("Running DexPatcher on ${baseApk.name} (in-memory killPairIpFull + Firebase getComponents emptyList)...")
+            val patchedCount = DexPatcher.patch(baseApk)
+            print("DexPatcher: $patchedCount classes rewritten in ${baseApk.name}")
+        } catch (e: Exception) {
+            print("DexPatcher failed: ${e.message}")
+            throw IOException("DexPatcher failed: ${e.localizedMessage}", e)
+        }
 
         if (!embedLSPatch) {
             print("Skipping LSPatch as embedLSPatch is disabled")

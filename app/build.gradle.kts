@@ -96,6 +96,11 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     compileOnly(fileTree("libs") { include("*.jar") })
     implementation(fileTree("libs") { include("lspatch.jar") })
+    configurations.getByName("implementation").apply {
+        exclude(group = "org.checkerframework", module = "checker-qual")
+        exclude(group = "com.google.guava", module = "guava")
+        exclude(group = "com.google.code.findbugs", module = "jsr305")
+    }
 
     val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
     implementation(composeBom)
@@ -124,6 +129,7 @@ dependencies {
     implementation(libs.zipalign.java)
     implementation(libs.coil.gif)
     implementation(libs.arsclib)
+    implementation(libs.dexlib2)
     compileOnly(libs.bcprov.jdk18on)
 }
 
