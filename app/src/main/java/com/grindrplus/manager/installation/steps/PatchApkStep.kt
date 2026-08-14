@@ -38,15 +38,25 @@ class PatchApkStep(
         }
 
         try {
+            val baseApk = apkFiles.find {
+                it.name == "base.apk" || it.name.startsWith("base.apk-")
+            } ?: apkFiles.first()
+
+            print("Inspecting ${baseApk.name} for manifest adjustments...")
+            val apkModule = ApkModule.loadApkFile(baseApk)
+            var manifestModified = false
+
+            // Neutralize PairIP DRM wrapper by pointing application class directly to RealApplication
+            val appElement = apkModule.androidManifest.applicationElement
+            val appNameAttr = appElement.searchAttributeByName("name")
+            if (appNameAttr != null && appNameAttr.valueString == "com.pairip.application.Application") {
+                print("PairIP wrapper detected. Replacing application class with RealApplication...")
+                appNameAttr.setValueAsString(StyleDocument.parseStyledString("com.grindrapp.android.RealApplication"))
+                manifestModified = true
+            }
+
             if (customMapsApiKey != null) {
                 print("Attempting to apply custom Maps API key...")
-                val baseApk = apkFiles.find {
-                    it.name == "base.apk" || it.name.startsWith("base.apk-")
-                } ?: apkFiles.first()
-
-                print("Using ${baseApk.name} for Maps API key modification")
-                val apkModule = ApkModule.loadApkFile(baseApk)
-
                 val metaElements = apkModule.androidManifest.applicationElement.getElements { element ->
                     element.name == "meta-data"
                 }
@@ -62,20 +72,27 @@ class PatchApkStep(
                             print("Found Maps API key element, replacing with custom key")
                             valueAttr.setValueAsString(StyleDocument.parseStyledString(customMapsApiKey))
                             found = true
+                            manifestModified = true
                         }
                     }
                 }
 
-                if (found) {
-                    print("Successfully replaced Maps API key, saving APK")
-                    apkModule.writeApk(baseApk)
-                } else {
+                if (!found) {
                     print("Maps API key element not found in manifest, skipping replacement")
                 }
             }
+
+            if (manifestModified) {
+                print("Saving modified manifest to ${baseApk.name}...")
+                apkModule.writeApk(baseApk)
+                print("Manifest updated successfully")
+            }
         } catch (e: Exception) {
-            print("Error applying Maps API key: ${e.message}")
+            print("Error adjusting manifest: ${e.message}")
         }
+
+        // Neutralize PairIP native binary in any split APKs
+        replacePairIpNativeLibs(context, apkFiles, print)
 
         if (!embedLSPatch) {
             print("Skipping LSPatch as embedLSPatch is disabled")
@@ -148,6 +165,63 @@ class PatchApkStep(
 
         patchedFiles.forEachIndexed { index, file ->
             print("  ${index + 1}. ${file.name} (${file.length() / 1024}KB)")
+        }
+    }
+
+    private fun replacePairIpNativeLibs(context: Context, apkFiles: List<File>, print: Print) {
+        val stubMap = mapOf(
+            "lib/x86_64/libpairipcore.so" to "pairip/libpairipcore_x86_64.so",
+            "lib/arm64-v8a/libpairipcore.so" to "pairip/libpairipcore_arm64_v8a.so",
+            "lib/armeabi-v7a/libpairipcore.so" to "pairip/libpairipcore_armeabi_v7a.so",
+            "lib/x86/libpairipcore.so" to "pairip/libpairipcore_x86.so"
+        )
+
+        for (apk in apkFiles) {
+            try {
+                var foundPairIp = false
+                val zipFile = java.util.zip.ZipFile(apk)
+                for (entryName in stubMap.keys) {
+                    if (zipFile.getEntry(entryName) != null) {
+                        foundPairIp = true
+                        break
+                    }
+                }
+                zipFile.close()
+
+                if (foundPairIp) {
+                    print("Replacing PairIP native library in ${apk.name} with stub...")
+                    val tempApk = File(apk.parentFile, "${apk.name}.tmp")
+                    val zin = java.util.zip.ZipInputStream(apk.inputStream().buffered())
+                    val zout = java.util.zip.ZipOutputStream(tempApk.outputStream().buffered())
+
+                    var entry = zin.nextEntry
+                    while (entry != null) {
+                        val assetPath = stubMap[entry.name]
+                        if (assetPath != null) {
+                            val newEntry = java.util.zip.ZipEntry(entry.name)
+                            zout.putNextEntry(newEntry)
+                            context.assets.open(assetPath).use { it.copyTo(zout) }
+                            zout.closeEntry()
+                        } else {
+                            zout.putNextEntry(java.util.zip.ZipEntry(entry.name))
+                            zin.copyTo(zout)
+                            zout.closeEntry()
+                        }
+                        entry = zin.nextEntry
+                    }
+                    zin.close()
+                    zout.close()
+
+                    if (apk.delete()) {
+                        tempApk.renameTo(apk)
+                        print("Successfully neutralized PairIP in ${apk.name}")
+                    } else {
+                        tempApk.delete()
+                    }
+                }
+            } catch (e: Exception) {
+                print("Warning: Failed to stub PairIP library in ${apk.name}: ${e.message}")
+            }
         }
     }
 }

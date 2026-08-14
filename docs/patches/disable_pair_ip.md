@@ -74,28 +74,20 @@ locked in by the time the hook is registered.
 
 ### What requires build-time patching
 
-To bypass PairIP on the **initial** app launch, you need to patch
-Grindr's bytecode **before** the app runs. This is what morphe-patches
-does. Two options:
+To bypass PairIP on the **initial** app launch, you need to neutralize both the manifest wrapper and the native `libpairipcore.so` integrity checks **before** the app runs:
 
-1. **Morphe / LSPatch (recommended)** — install Morphe from
-   https://github.com/MorpheApp/morphe-cli or use the in-app
-   `manager/installation` flow. Embed the GPlus dex into Grindr and
-   the manifest will be patched at the same time.
-2. **Hand-rolled arsclib rewrite** — `app/src/main/java/com/grindrplus/manager/installation/`
-   uses `arsclib` to manually rewrite the APK. Requires Shizuku or
-   root to install the result.
+1. **GrindrPlus Manager Installation Flow (`PatchApkStep.kt`) [RECOMMENDED]**:
+   - Manifest rewriting via `arsclib` repoints `android:name` directly to `com.grindrapp.android.RealApplication`.
+   - Native library substitution replaces `libpairipcore.so` in split APKs with a safe, 16KB-page-aligned JNI stub compiled from C.
+   - Preserves all Kotlin metadata (`kotlinx.metadata`) intact, avoiding the `apktool`/`smali` coroutines crash.
+   - For full technical details, see [`docs/pairip_bypass_and_16kb_alignment.md`](../pairip_bypass_and_16kb_alignment.md).
 
-If using the GPlus manager UI, the build-time patch is applied
-automatically — the resulting APK has `<application android:name="com.grindrapp.android.RealApplication">`
-directly (skipping the PairIP wrapper), and the LicenseActivity
-declaration is removed from the manifest.
+2. **Standalone smali bytecode rewriting (Legacy/Experimental)**:
+   - Modifying `StartupLauncher.launch()` directly in smali breaks Kotlin metadata annotations during `baksmali`/`apktool` assembly (see Issue #1). Use the `PatchApkStep` / `arsclib` approach instead.
 
 ## Verified against
 
-- Grindr 26.13.0 — initial port (PairIP library `pairipcore.so` loads,
-  `LicenseClient.checkLicense` confirmed called from
-  `com.pairip.application.Application.attachBaseContext`)
+- Grindr 26.13.0 — Verified with native stub + manifest repoint + 16KB page alignment on Android 16 (Pixel 10 Pro XL).
 
 ## Other techniques surveyed (not applied)
 

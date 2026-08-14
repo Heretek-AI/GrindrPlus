@@ -154,12 +154,15 @@ When a new Grindr version drops:
 
 ## Reusable skills
 
-This repo ships four skills under `.claude/skills/`:
+This repo ships skills under `.claude/skills/`:
 
 - `bump-grindr-version` — automate §5 steps 1–3.
 - `update-obfuscated-symbols` — automate §5 step 4.
 - `patch-doc-coverage` — check and author the `docs/patches/*.md` coverage.
 - `verify-build` — run `./gradlew assembleDebug` and surface failures.
+- `pairip-bypass` — PairIP DRM reverse engineering, manifest repointing, and native JNI stub injection.
+- `16kb-page-alignment` — 16KB memory page alignment diagnostics and fixes for Android 15/16+ (API 35+).
+- `test-install-avd` — AVD deployment, Manager UI custom files installation, and testing workflow.
 
 ## See also
 

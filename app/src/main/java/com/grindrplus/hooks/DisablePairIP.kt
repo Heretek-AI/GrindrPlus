@@ -72,39 +72,19 @@ class DisablePairIP : Hook(
         // Skip the entire body; just call super. This kills the PairIP chain
         // before any of its components have a chance to query the server.
         try {
-            findClass(pairipApp)
-                .hook("attachBaseContext", HookStage.BEFORE) { param ->
-                    val ctx = param.arg<Context>(0)
-                    val superClass = param.thisObject().javaClass.superclass
-                    XposedHelpers.callMethod(
-                        param.thisObject(),
-                        "android.content.ContextWrapper",
-                        "attachBaseContext",
-                        ctx,
-                    )
-                    param.setResult(null)
-                }
-            // fall through: per-class hook below will still fire if the above
-            // misses (e.g., minSdk mismatch on the Application class).
-        } catch (_: Throwable) {
-            // The PairIP Application class may not be present in every
-            // Grindr build. The per-method hooks below still cover the
-            // individual PairIP components.
-        }
-
-        // 2. SignatureCheck.verifyIntegrity — APK signature whitelist
-        // check. Force it to be a no-op.
-        safeHook(signatureCheck, "verifyIntegrity") { param -> param.setResult(null) }
-
-        // 3. VMRunner.<clinit> — System.loadLibrary("pairipcore") lives here.
-        // Returning from <clinit> early skips the native load entirely.
-        try {
-            findClass(vmRunner).hookConstructor(HookStage.BEFORE) { param ->
+            findClass(pairipApp).hook("attachBaseContext", HookStage.BEFORE) { param ->
                 param.setResult(null)
             }
         } catch (_: Throwable) {
-            // Class may already be initialized by the time we hook.
+            // The PairIP Application class may not be present or used.
         }
+
+        // 2. SignatureCheck.verifyIntegrity — APK signature whitelist check.
+        safeHook(signatureCheck, "verifyIntegrity") { param -> param.setResult(null) }
+
+        // 3. VMRunner methods — stop VM invocation and context setting.
+        safeHook(vmRunner, "setContext") { param -> param.setResult(null) }
+        safeHook(vmRunner, "invoke") { param -> param.setResult(null) }
 
         // 4. StartupLauncher.launch — entry point for the IAP VM. No-op.
         safeHook(startupLauncher, "launch") { param -> param.setResult(null) }

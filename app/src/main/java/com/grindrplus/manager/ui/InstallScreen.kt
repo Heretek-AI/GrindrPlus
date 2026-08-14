@@ -347,6 +347,11 @@ fun InstallPage(context: Activity, innerPadding: PaddingValues, viewModel: Insta
                                     return@Button
                                 }
 
+                                if (selectedVersion!!.grindrUrl.isBlank() || selectedVersion!!.modUrl.isBlank()) {
+                                    showCustomFileDialog = true
+                                    return@Button
+                                }
+
                                 startInstallation(
                                     selectedVersion!!,
                                     onStarted = { isInstalling = true },

@@ -44,11 +44,18 @@ class InstallScreenViewModel : ViewModel() {
 
             textUpdateJob.cancel() // Cancel the text update job once loading is done
 
+            val currentVersion = "v4.8.0-26.13.0"
             if (result.isSuccess) {
                 versionData.clear()
-                versionData.addAll(result.getOrThrow())
+                val list = result.getOrThrow().toMutableList()
+                if (list.none { it.modVer == currentVersion }) {
+                    list.add(0, Data(currentVersion, "", ""))
+                }
+                versionData.addAll(list)
                 Logger.d("Found ${versionData.size} available versions")
             } else {
+                versionData.clear()
+                versionData.add(Data(currentVersion, "", ""))
                 _errorMessage.value = result.exceptionOrNull()?.localizedMessage ?: "Unknown error"
                 Logger.e("Error loading version data: ${_errorMessage.value}")
             }

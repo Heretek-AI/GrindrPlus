@@ -36,7 +36,7 @@ fun FileDialog(
     onDismiss: () -> Unit,
     onSelect: (versionName: String, bundleUri: Uri, modUri: Uri) -> Unit
 ) {
-    var customVersionName by remember { mutableStateOf("custom") }
+    var customVersionName by remember { mutableStateOf("v4.8.0-26.13.0") }
     var bundleUri by remember { mutableStateOf<Uri?>(null) }
     var modUri by remember { mutableStateOf<Uri?>(null) }
 
